@@ -45,6 +45,98 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(favicon(path.join(__dirname, 'public', 'images', 'favicon.ico')));
 
 
+Movies.find()
+.select({ title: 1, year: 1 })
+.then(allMovies => {
+  res.render("index", {
+    allMovies,
+    creator: process.env.MY_CREATOR,
+    host: process.env.HOST
+  });
+});
+} else {
+if (req.params.sortOrder === "asc") {
+Movies.find()
+  .select({ title: 1, year: 1 })
+  .sort({ year: 1 })
+  .then(allMovies => {
+    res.render("index", {
+      allMovies,
+      creator: process.env.MY_CREATOR,
+      host: process.env.HOST
+    });
+  });
+}
+
+if (req.params.sortOrder === "desc") {
+Movies.find()
+  .select({ title: 1, year: 1 })
+  .sort({ year: -1 })
+  .then(allMovies => {
+    res.render("index", {
+      allMovies,
+      creator: process.env.MY_CREATOR,
+      host: process.env.HOST
+    });
+  });
+}
+}
+});
+
+app.get("/movie/:id", (req, res) => {
+Movies.findById(req.params.id).then(oneMovie => {
+res.render("movie-detail", { oneMovie, host: process.env.HOST });
+});
+});
+
+
+app.get("/search", (req, res) => {
+Movies.find({ title: req.query.movie }).then(movieDetails => {
+res.render("form-page-2", { query: movieDetails });
+});
+});
+
+app.get("/form", (req, res) => {
+res.render("form-page");
+});
+
+// query get with multi-params
+app.get("/users/:username/books/:bookId", (req, res, next) => {
+res.send(req.params.username + "    " + req.params.bookId);
+});
+
+// http://localhost:5000/movie-querystring?identificadorPeli=5d7775a51be232a0c7086e20&genres=Drama,Crime
+app.get("/movie-querystring", (req, res) => {
+Movies.find({ genre: { $all: req.query.genres.split(",") } })
+//.select({title: 1})
+.then(oneMovie => {
+res.json(oneMovie);
+})
+.catch(error => {
+res.json({ movieNotFound: true, error });
+});
+});
+
+app.get("/create-movie", (req, res) => {
+res.render("add-movie");
+});
+
+app.post("/create-movie-2", (req, res) => {
+console.log(req.body)
+Movies.create({
+title: req.body.title,
+year: req.body.year,
+rate: req.body.rate,
+director: req.body.director,
+duration: req.body.duration
+// genre: [String]
+}).then(createdMovie => {
+res.json({
+movieCreated: true,
+createdMovie
+});
+});
+});
 
 // default value for title local
 app.locals.title = '';
